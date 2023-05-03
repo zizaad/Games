@@ -1,4 +1,4 @@
-// Быки и коровы
+// Bulls and Cows
 package main
 
 import (
@@ -19,7 +19,7 @@ const (
 func main() {
 	try := 0
 	var digits int
-	fmt.Println("Введите количество цифр")
+	fmt.Println("Enter the number of digits")
 	fmt.Scan(&digits)
 	rand.Seed(time.Now().UnixNano())
 	src := make([]int, digits)
@@ -30,18 +30,18 @@ func main() {
 	usrWrd := make([]int, digits)
 	for {
 		fillMap(mp, src)
-		fmt.Printf("Введите число\n")
+		fmt.Printf("Your number:\n")
 		var usr string
 		fmt.Scan(&usr)
 		if len(usr) != digits {
-			fmt.Printf("Неправильное количество цифр!\n")
+			fmt.Printf("Incorrect number of digits!\n")
 			continue
 		}
 		parse(usrWrd, usr)
 		try++
 		printWrd(src, mp, usrWrd)
 		if win(src, usrWrd) {
-			fmt.Printf("Вы отгадали число за %d попыток!\n", try)
+			fmt.Printf("You guessed the number in %d attempts!\n", try)
 			break
 		}
 	}
