@@ -5,12 +5,16 @@
 
 // ! двумерный слайс структур cell: -1 - бомба, 0 - пустая ячейка, 1 - 8 - цифры, 9 - флаг; false - закрыто, true - открыто
 
-// вывод поля (посмотреть, как чистить экран перед этим, чтобы поле всегда было в одном месте)
+// ! вывод поля (посмотреть, как чистить экран перед этим, чтобы поле всегда было в одном месте)
 // ! поле с буквами и цифрами, как в шахматах, чтобы пользователь вводил определённую координату
 
-// ввод пользователя: <оператор> <буква> <цифра> - операторы: show (открыть ячейку) и flag (поставить флаг)
+// ! ввод пользователя: <оператор> <буква> <цифра> - операторы: open (открыть ячейку) и flag (поставить флаг); exit
 // по координате открываю ячейку - если бомба, поле открывается и конец игры; если 0 - открывать соседние клетки
 // ! цветные цифры, бомбы - ?, флаги - красные
+
+// написать правила: open - открыть клетку, flag - поставить флаг
+
+// проверка победы
 
 package main
 
@@ -48,7 +52,7 @@ type Cell struct {
 }
 
 func (c *Cell) String() string {
-	if !c.open {
+	if !c.open && c.val != 9 {
 		return "▯"
 	}
 	var res string
@@ -74,14 +78,13 @@ func (c *Cell) String() string {
 	case 8:
 		res = colorPurple + "8"
 	case 9:
-		res = colorCyan + "9"
+		res = colorCyan + "⚑"
 	}
 	res += colorReset
 	return res
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	var lvl int
 CHOISE:
 	fmt.Printf("Выберите уровень сложности:\n1. Easy\n2. Middle\n3. Hard\n")
@@ -98,10 +101,15 @@ CHOISE:
 		fmt.Printf("Нет такого варианта\n")
 		goto CHOISE
 	}
-	showField(field)
+	ex := true
+	for ex {
+		showField(field)
+		ex = cmd(field)
+	}
 }
 
 func generation(field [][]Cell, length, mines int) [][]Cell {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	field = make([][]Cell, length)
 	for idx := range field {
 		field[idx] = make([]Cell, length)
@@ -110,7 +118,7 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 	// генерируем mines различных чисел - координаты мин
 	for i := 0; i < mines; i++ {
 		for {
-			crd := rand.Intn(length * length)
+			crd := r.Intn(length * length)
 			if field[crd/length][crd%length].val != -1 {
 				field[crd/length][crd%length].val = -1
 				break
@@ -138,33 +146,56 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 			}
 		}
 	}
-
 	return field
 }
 
 func showField(field [][]Cell) {
 	screen.Clear()
 	screen.MoveTopLeft()
-	fmt.Print("  ")
+	fmt.Print("   ")
+	var letter int = 'a'
 	for i := 0; i < len(field); i++ {
-		fmt.Printf("%-2d", i+1)
+		fmt.Printf("%-2c", letter)
+		letter++
 		if i != len(field)-1 {
 			fmt.Print(" ")
 		}
 	}
 	fmt.Print("\n")
-	var letter int = 'a'
 	for i := 0; i < len(field); i++ {
-		fmt.Printf("%c ", letter)
-		letter++
+		fmt.Printf("%-2d ", i+1)
 		for j := 0; j < len(field); j++ {
 			fmt.Print(field[i][j].String())
 			if j != len(field)-1 {
 				fmt.Print("  ")
 			}
 		}
-		if i != len(field)-1 {
-			fmt.Print("\n")
-		}
+		fmt.Print("\n")
 	}
+}
+
+func cmd(field [][]Cell) bool {
+	var op string
+	fmt.Scan(&op)
+	switch op {
+	case "open":
+		var i int
+		var j string
+		fmt.Scan(&i)
+		fmt.Scan(&j)
+		openCell(field, i-1, int(j[0]-97))
+	case "flag":
+		var i int
+		var j string
+		fmt.Scan(&i)
+		fmt.Scan(&j)
+		field[i-1][int(j[0]-97)].val = 9
+	case "exit":
+		return false
+	}
+	return true
+}
+
+func openCell(field [][]Cell, icur, jcur int) {
+	field[icur][jcur].open = true
 }
