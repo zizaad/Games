@@ -144,6 +144,7 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 
 func showField(field [][]Cell) {
 	screen.Clear()
+	screen.MoveTopLeft()
 	fmt.Print("  ")
 	for i := 0; i < len(field); i++ {
 		fmt.Printf("%-2d", i+1)
