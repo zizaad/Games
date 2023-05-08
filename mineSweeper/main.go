@@ -12,8 +12,10 @@
 // по координате открываю ячейку - если бомба, поле открывается и конец игры; если 0 - открывать соседние клетки
 // ! цветные цифры, бомбы - ?, флаги - красные
 
-// написать правила: open - открыть клетку, flag - поставить флаг
+// добавить цвета - escape последовательности (после [ поставить 90+)
 
+// написать правила: open - открыть клетку, flag - поставить флаг
+// показать открытое поле после exit
 // проверка победы
 
 package main
@@ -23,6 +25,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/inancgumus/screen"
 )
 
@@ -36,14 +39,21 @@ const (
 	hardLength = 26
 	hardMines  = 169
 
-	colorReset  = "\033[0m"
-	colorRed    = "\033[31m" // -1	// 3
-	colorGreen  = "\033[32m" // 2	// 7
-	colorYellow = "\033[33m" // 4	// 9
-	colorBlue   = "\033[34m" // 1	// 6
-	colorPurple = "\033[35m" // 5	// 8
-	colorCyan   = "\033[36m" // 9 - flag
-	colorWhite  = "\033[37m"
+	colorReset        = "\033[0m"
+	colorRed          = "\033[31m"  // -1	// 3
+	colorBrightRed    = "\033[91m]" // 9
+	colorGreen        = "\033[32m"  // 2	// 7
+	colorBrightGreen  = "\033[92m]"
+	colorYellow       = "\033[33m" // 4	// 9
+	colorBrightYellow = "\033[93m]"
+	colorBlue         = "\033[34m" // 1	// 6
+	colorBrightBlue   = "\033[94m]"
+	colorPurple       = "\033[35m" // 5	// 8
+	colorBrightPurple = "\033[95m]"
+	colorCyan         = "\033[36m" // 9 - flag
+	colorBrightCyan   = "\033[96m]"
+	colorWhite        = "\033[37m"
+	colorBrightBlack  = "\033[90m"
 )
 
 type Cell struct {
@@ -153,9 +163,11 @@ func showField(field [][]Cell) {
 	screen.Clear()
 	screen.MoveTopLeft()
 	fmt.Print("   ")
+	grey := color.New(color.FgHiBlack, color.Bold)
 	var letter int = 'a'
 	for i := 0; i < len(field); i++ {
-		fmt.Printf("%-2c", letter)
+		// fmt.Printf("%s%-2c%s", colorBrightBlack, letter, colorReset)
+		grey.Printf("%-2c", letter)
 		letter++
 		if i != len(field)-1 {
 			fmt.Print(" ")
@@ -163,7 +175,7 @@ func showField(field [][]Cell) {
 	}
 	fmt.Print("\n")
 	for i := 0; i < len(field); i++ {
-		fmt.Printf("%-2d ", i+1)
+		fmt.Printf("%s%-2d%s ", colorBrightBlack, i+1, colorReset)
 		for j := 0; j < len(field); j++ {
 			fmt.Print(field[i][j].String())
 			if j != len(field)-1 {
@@ -191,6 +203,7 @@ func cmd(field [][]Cell) bool {
 		fmt.Scan(&j)
 		field[i-1][int(j[0]-97)].val = 9
 	case "exit":
+		// показать открытое поле
 		return false
 	}
 	return true
