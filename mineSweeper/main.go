@@ -23,6 +23,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/fatih/color"
@@ -38,22 +39,6 @@ const (
 
 	hardLength = 26
 	hardMines  = 169
-
-	colorReset        = "\033[0m"
-	colorRed          = "\033[31m"  // -1	// 3
-	colorBrightRed    = "\033[91m]" // 9
-	colorGreen        = "\033[32m"  // 2	// 7
-	colorBrightGreen  = "\033[92m]"
-	colorYellow       = "\033[33m" // 4	// 9
-	colorBrightYellow = "\033[93m]"
-	colorBlue         = "\033[34m" // 1	// 6
-	colorBrightBlue   = "\033[94m]"
-	colorPurple       = "\033[35m" // 5	// 8
-	colorBrightPurple = "\033[95m]"
-	colorCyan         = "\033[36m" // 9 - flag
-	colorBrightCyan   = "\033[96m]"
-	colorWhite        = "\033[37m"
-	colorBrightBlack  = "\033[90m"
 )
 
 type Cell struct {
@@ -64,34 +49,43 @@ type Cell struct {
 func (c *Cell) String() string {
 	if !c.open && c.val != 9 {
 		return "▯"
+	} else if c.val == 9 {
+		return "⚑"
+	} else if c.val == -1 {
+		return "*"
+	} else if c.val == 0 {
+		return " "
+	} else {
+		return strconv.Itoa(c.val)
 	}
-	var res string
-	switch c.val {
-	case -1:
-		res = colorRed + "*"
-	case 0:
-		res = " "
-	case 1:
-		res = colorBlue + "1"
-	case 2:
-		res = colorGreen + "2"
-	case 3:
-		res = colorRed + "3"
-	case 4:
-		res = colorYellow + "4"
-	case 5:
-		res = colorPurple + "5"
-	case 6:
-		res = colorBlue + "6"
-	case 7:
-		res = colorGreen + "7"
-	case 8:
-		res = colorPurple + "8"
-	case 9:
-		res = colorCyan + "⚑"
-	}
-	res += colorReset
-	return res
+	return strconv.Itoa(c.val)
+	// var res string
+	// switch c.val {
+	// case -1:
+	// 	res = colorRed + "*"
+	// case 0:
+	// 	res = " "
+	// case 1:
+	// 	res = colorBlue + "1"
+	// case 2:
+	// 	res = colorGreen + "2"
+	// case 3:
+	// 	res = colorRed + "3"
+	// case 4:
+	// 	res = colorYellow + "4"
+	// case 5:
+	// 	res = colorPurple + "5"
+	// case 6:
+	// 	res = colorBlue + "6"
+	// case 7:
+	// 	res = colorGreen + "7"
+	// case 8:
+	// 	res = colorPurple + "8"
+	// case 9:
+	// 	res = colorCyan + "⚑"
+	// }
+	// res += colorReset
+	// return res
 }
 
 func main() {
@@ -162,21 +156,32 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 func showField(field [][]Cell) {
 	screen.Clear()
 	screen.MoveTopLeft()
-	fmt.Print("   ")
-	grey := color.New(color.FgHiBlack, color.Bold)
+	grey := color.New(color.BgHiBlack)
+	grey.Print("   ")
 	var letter int = 'a'
 	for i := 0; i < len(field); i++ {
-		// fmt.Printf("%s%-2c%s", colorBrightBlack, letter, colorReset)
 		grey.Printf("%-2c", letter)
 		letter++
 		if i != len(field)-1 {
-			fmt.Print(" ")
+			grey.Print(" ")
 		}
 	}
 	fmt.Print("\n")
 	for i := 0; i < len(field); i++ {
-		fmt.Printf("%s%-2d%s ", colorBrightBlack, i+1, colorReset)
+		grey.Printf("%-2d", i+1)
+		fmt.Print(" ")
 		for j := 0; j < len(field); j++ {
+			// if !c.open && c.val != 9 {
+			// 	return "▯"
+			// } else if c.val == 9 {
+			// 	return "⚑"
+			// } else if c.val == -1 {
+			// 	return "*"
+			// } else if c.val == 0 {
+			// 	return " "
+			// } else {
+			// 	return strconv.Itoa(c.val)
+			// }
 			fmt.Print(field[i][j].String())
 			if j != len(field)-1 {
 				fmt.Print("  ")
