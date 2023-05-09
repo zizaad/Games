@@ -1,29 +1,10 @@
 // MineSweeper
 
-// ! уровни сложности - easy, middle (?), hard
-// ! генерация поля
-
-// ! двумерный слайс структур cell: -1 - бомба, 0 - пустая ячейка, 1 - 8 - цифры, 9 - флаг; false - закрыто, true - открыто
-
-// ! вывод поля (посмотреть, как чистить экран перед этим, чтобы поле всегда было в одном месте)
-// ! поле с буквами и цифрами, как в шахматах, чтобы пользователь вводил определённую координату
-
-// ! ввод пользователя: <оператор> <буква> <цифра> - операторы: open (открыть ячейку) и flag (поставить флаг); exit
-// по координате открываю ячейку - если бомба, поле открывается и конец игры; если 0 - открывать соседние клетки
-// ! цветные цифры, бомбы - ?, флаги - красные
-
-// добавить цвета - escape последовательности (после [ поставить 90+)
-
-// написать правила: open - открыть клетку, flag - поставить флаг
-// показать открытое поле после exit
-// проверка победы
-
 package main
 
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/fatih/color"
@@ -32,7 +13,7 @@ import (
 
 const (
 	easyLength = 10
-	easyMines  = 25
+	easyMines  = 18
 
 	middleLength = 17
 	middleMines  = 72
@@ -41,90 +22,110 @@ const (
 	hardMines  = 169
 )
 
+type Field struct {
+	fld       [][]Cell
+	mines     int
+	minesOpen int
+}
+
 type Cell struct {
 	val  int
 	open bool
+	flag bool
 }
 
-func (c *Cell) String() string {
-	if !c.open && c.val != 9 {
-		return "▯"
-	} else if c.val == 9 {
-		return "⚑"
-	} else if c.val == -1 {
-		return "*"
-	} else if c.val == 0 {
-		return " "
-	} else {
-		return strconv.Itoa(c.val)
+func (c *Cell) printColor() {
+	white := color.New(color.FgHiWhite, color.BgHiBlack)
+	blue := color.New(color.FgBlue, color.BgHiBlack)
+	back := color.New(color.BgHiBlack)
+	red := color.New(color.FgRed, color.BgHiBlack)
+	green := color.New(color.FgGreen, color.BgHiBlack)
+	magenta := color.New(color.FgMagenta, color.BgHiBlack)
+	cyan := color.New(color.FgCyan, color.BgHiBlack)
+	yellow := color.New(color.FgYellow, color.BgHiBlack)
+	if c.flag {
+		cyan.Print("⚑ ")
+		return
 	}
-	return strconv.Itoa(c.val)
-	// var res string
-	// switch c.val {
-	// case -1:
-	// 	res = colorRed + "*"
-	// case 0:
-	// 	res = " "
-	// case 1:
-	// 	res = colorBlue + "1"
-	// case 2:
-	// 	res = colorGreen + "2"
-	// case 3:
-	// 	res = colorRed + "3"
-	// case 4:
-	// 	res = colorYellow + "4"
-	// case 5:
-	// 	res = colorPurple + "5"
-	// case 6:
-	// 	res = colorBlue + "6"
-	// case 7:
-	// 	res = colorGreen + "7"
-	// case 8:
-	// 	res = colorPurple + "8"
-	// case 9:
-	// 	res = colorCyan + "⚑"
-	// }
-	// res += colorReset
-	// return res
+	if !c.open {
+		white.Print("▮ ")
+		return
+	}
+	switch c.val {
+	case -1:
+		red.Printf("%c", '*')
+	case 0:
+		back.Printf("%c", ' ')
+	case 1:
+		blue.Print(c.val)
+	case 2:
+		green.Print(c.val)
+	case 3:
+		red.Print(c.val)
+	case 4:
+		yellow.Print(c.val)
+	case 5:
+		magenta.Print(c.val)
+	case 6:
+		blue.Print(c.val)
+	case 7:
+		green.Print(c.val)
+	case 8:
+		magenta.Print(c.val)
+	}
+	back.Print(" ")
 }
 
 func main() {
 	var lvl int
+	green := color.New(color.FgGreen)
+	fmt.Printf("Rules:\n")
+	green.Printf("open <number> <letter>")
+	fmt.Printf(" - open a cell with coords (number, letter)\n")
+	green.Printf("flag <number> <letter>")
+	fmt.Printf(" - set a flag on a cell with coords (number, letter)\n")
+	green.Printf("exit")
+	fmt.Printf(" - exit the game\n")
 CHOISE:
-	fmt.Printf("Выберите уровень сложности:\n1. Easy\n2. Middle\n3. Hard\n")
+	fmt.Printf("Select the difficulty level:\n1. Easy\n2. Middle\n3. Hard\n")
 	fmt.Scan(&lvl)
-	var field [][]Cell = nil
+	var field Field = Field{nil, 0, 0}
 	switch lvl {
 	case 1:
-		field = generation(field, easyLength, easyMines)
+		field.generate(easyLength, easyMines)
 	case 2:
-		field = generation(field, middleLength, middleMines)
+		field.generate(middleLength, middleMines)
 	case 3:
-		field = generation(field, hardLength, hardMines)
+		field.generate(hardLength, hardMines)
 	default:
-		fmt.Printf("Нет такого варианта\n")
+		fmt.Printf("There is no such option\n")
 		goto CHOISE
 	}
 	ex := true
 	for ex {
-		showField(field)
-		ex = cmd(field)
+		field.showField()
+		if field.win() {
+			color.Green("WIN")
+			break
+		}
+		ex = field.cmd()
 	}
 }
 
-func generation(field [][]Cell, length, mines int) [][]Cell {
+func (f *Field) generate(length, mines int) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	field = make([][]Cell, length)
-	for idx := range field {
-		field[idx] = make([]Cell, length)
+	f.mines = mines
+	f.fld = make([][]Cell, length)
+	for idx := range f.fld {
+		f.fld[idx] = make([]Cell, length)
 	}
 
 	// генерируем mines различных чисел - координаты мин
 	for i := 0; i < mines; i++ {
 		for {
 			crd := r.Intn(length * length)
-			if field[crd/length][crd%length].val != -1 {
-				field[crd/length][crd%length].val = -1
+			if f.fld[crd/length][crd%length].val != -1 {
+				f.fld[crd/length][crd%length].val = -1
 				break
 			}
 		}
@@ -132,7 +133,7 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 
 	for i := 0; i < length; i++ {
 		for j := 0; j < length; j++ {
-			if field[i][j].val == -1 {
+			if f.fld[i][j].val == -1 {
 				continue
 			}
 			for k := -1; k <= 1; k++ {
@@ -143,55 +144,43 @@ func generation(field [][]Cell, length, mines int) [][]Cell {
 					if j+l == -1 || j+l == length || (k == 0 && l == 0) {
 						continue
 					}
-					if field[i+k][j+l].val == -1 {
-						field[i][j].val++
+					if f.fld[i+k][j+l].val == -1 {
+						f.fld[i][j].val++
 					}
 				}
 			}
 		}
 	}
-	return field
 }
 
-func showField(field [][]Cell) {
+func (f *Field) showField() {
 	screen.Clear()
 	screen.MoveTopLeft()
-	grey := color.New(color.BgHiBlack)
+	grey := color.New(color.BgHiBlack, color.Bold)
 	grey.Print("   ")
 	var letter int = 'a'
-	for i := 0; i < len(field); i++ {
+	for i := 0; i < len(f.fld); i++ {
 		grey.Printf("%-2c", letter)
 		letter++
-		if i != len(field)-1 {
+		if i != len(f.fld)-1 {
 			grey.Print(" ")
 		}
 	}
 	fmt.Print("\n")
-	for i := 0; i < len(field); i++ {
-		grey.Printf("%-2d", i+1)
-		fmt.Print(" ")
-		for j := 0; j < len(field); j++ {
-			// if !c.open && c.val != 9 {
-			// 	return "▯"
-			// } else if c.val == 9 {
-			// 	return "⚑"
-			// } else if c.val == -1 {
-			// 	return "*"
-			// } else if c.val == 0 {
-			// 	return " "
-			// } else {
-			// 	return strconv.Itoa(c.val)
-			// }
-			fmt.Print(field[i][j].String())
-			if j != len(field)-1 {
-				fmt.Print("  ")
+	for i := 0; i < len(f.fld); i++ {
+		grey.Printf("%2d ", i+1)
+		for j := 0; j < len(f.fld); j++ {
+			f.fld[i][j].printColor()
+			if j != len(f.fld)-1 {
+				grey.Print(" ")
 			}
 		}
 		fmt.Print("\n")
 	}
+	fmt.Printf("Mines: %d\n", f.mines-f.minesOpen)
 }
 
-func cmd(field [][]Cell) bool {
+func (f *Field) cmd() bool {
 	var op string
 	fmt.Scan(&op)
 	switch op {
@@ -200,20 +189,94 @@ func cmd(field [][]Cell) bool {
 		var j string
 		fmt.Scan(&i)
 		fmt.Scan(&j)
-		openCell(field, i-1, int(j[0]-97))
+		mine := openCell(f.fld, i-1, int(j[0]-97))
+		if mine {
+			f.openCells()
+			color.Red("DEFEAT")
+			return false
+		}
 	case "flag":
 		var i int
 		var j string
 		fmt.Scan(&i)
 		fmt.Scan(&j)
-		field[i-1][int(j[0]-97)].val = 9
+		if f.fld[i-1][int(j[0]-97)].open {
+			return true
+		}
+		f.fld[i-1][int(j[0]-97)].flag = !f.fld[i-1][int(j[0]-97)].flag
+		f.minesOpen++
 	case "exit":
-		// показать открытое поле
+		f.openCells()
 		return false
 	}
 	return true
 }
 
-func openCell(field [][]Cell, icur, jcur int) {
-	field[icur][jcur].open = true
+func openCell(field [][]Cell, i, j int) bool {
+	field[i][j].open = true
+	if field[i][j].val == 0 {
+		autoOpen(field, i, j, 0, -1) // left
+		autoOpen(field, i, j, 0, 1)  // right
+		autoOpen(field, i, j, -1, 0) // top
+		autoOpen(field, i, j, 1, 0)  // bottom
+	}
+	return field[i][j].val == -1
+}
+
+func autoOpen(field [][]Cell, i, j, di, dj int) {
+	if di == 0 {
+		if j+dj == -1 || j+dj == len(field) {
+			return
+		}
+		for k := -1; k <= 1; k++ {
+			if i+k == -1 || i+k == len(field) {
+				continue
+			}
+			if field[i+k][j+dj].open {
+				continue
+			}
+			field[i+k][j+dj].open = true
+			if field[i+k][j+dj].val == 0 {
+				autoOpen(field, i+k, j+dj, di, dj)
+				autoOpen(field, i+k, j+dj, k, di)
+			}
+		}
+	} else {
+		if i+di == -1 || i+di == len(field) {
+			return
+		}
+		for k := -1; k <= 1; k++ {
+			if j+k == -1 || j+k == len(field) {
+				continue
+			}
+			if field[i+di][j+k].open {
+				continue
+			}
+			field[i+di][j+k].open = true
+			if field[i+di][j+k].val == 0 {
+				autoOpen(field, i+di, j+k, di, dj)
+				autoOpen(field, i+di, j+k, dj, k)
+			}
+		}
+	}
+}
+
+func (f *Field) openCells() {
+	for i := range f.fld {
+		for j := range f.fld[i] {
+			f.fld[i][j].open = true
+		}
+	}
+	f.showField()
+}
+
+func (f *Field) win() bool {
+	for i := range f.fld {
+		for j := range f.fld[i] {
+			if !f.fld[i][j].open && f.fld[i][j].val != -1 {
+				return false
+			}
+		}
+	}
+	return true
 }
