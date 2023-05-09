@@ -85,9 +85,9 @@ func main() {
 	green.Printf("flag <number> <letter>")
 	fmt.Printf(" - set a flag on a cell with coords (number, letter)\n")
 	green.Printf("exit")
-	fmt.Printf(" - exit the game\n")
+	fmt.Printf(" - exit the game\n\n")
 CHOISE:
-	fmt.Printf("Select the difficulty level:\n1. Easy\n2. Middle\n3. Hard\n")
+	fmt.Printf("Choose the level of difficulty:\n1. Easy\n2. Middle\n3. Hard\n")
 	fmt.Scan(&lvl)
 	var field Field = Field{nil, 0, 0}
 	switch lvl {
@@ -120,37 +120,49 @@ func (f *Field) generate(length, mines int) {
 		f.fld[idx] = make([]Cell, length)
 	}
 
-	// генерируем mines различных чисел - координаты мин
 	for i := 0; i < mines; i++ {
 		for {
 			crd := r.Intn(length * length)
 			if f.fld[crd/length][crd%length].val != -1 {
 				f.fld[crd/length][crd%length].val = -1
+				for k := -1; k <= 1; k++ {
+					if crd/length+k == -1 || crd/length+k == length {
+						continue
+					}
+					for l := -1; l <= 1; l++ {
+						if crd%length+l == -1 || crd%length+l == length || (k == 0 && l == 0) {
+							continue
+						}
+						if f.fld[crd/length+k][crd%length+l].val != -1 {
+							f.fld[crd/length+k][crd%length+l].val++
+						}
+					}
+				}
 				break
 			}
 		}
 	}
 
-	for i := 0; i < length; i++ {
-		for j := 0; j < length; j++ {
-			if f.fld[i][j].val == -1 {
-				continue
-			}
-			for k := -1; k <= 1; k++ {
-				if i+k == -1 || i+k == length {
-					continue
-				}
-				for l := -1; l <= 1; l++ {
-					if j+l == -1 || j+l == length || (k == 0 && l == 0) {
-						continue
-					}
-					if f.fld[i+k][j+l].val == -1 {
-						f.fld[i][j].val++
-					}
-				}
-			}
-		}
-	}
+	// for i := 0; i < length; i++ {
+	// 	for j := 0; j < length; j++ {
+	// 		if f.fld[i][j].val == -1 {
+	// 			continue
+	// 		}
+	// 		for k := -1; k <= 1; k++ {
+	// 			if i+k == -1 || i+k == length {
+	// 				continue
+	// 			}
+	// 			for l := -1; l <= 1; l++ {
+	// 				if j+l == -1 || j+l == length || (k == 0 && l == 0) {
+	// 					continue
+	// 				}
+	// 				if f.fld[i+k][j+l].val == -1 {
+	// 					f.fld[i][j].val++
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 func (f *Field) showField() {
