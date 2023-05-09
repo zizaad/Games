@@ -142,27 +142,6 @@ func (f *Field) generate(length, mines int) {
 			}
 		}
 	}
-
-	// for i := 0; i < length; i++ {
-	// 	for j := 0; j < length; j++ {
-	// 		if f.fld[i][j].val == -1 {
-	// 			continue
-	// 		}
-	// 		for k := -1; k <= 1; k++ {
-	// 			if i+k == -1 || i+k == length {
-	// 				continue
-	// 			}
-	// 			for l := -1; l <= 1; l++ {
-	// 				if j+l == -1 || j+l == length || (k == 0 && l == 0) {
-	// 					continue
-	// 				}
-	// 				if f.fld[i+k][j+l].val == -1 {
-	// 					f.fld[i][j].val++
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
 }
 
 func (f *Field) showField() {
